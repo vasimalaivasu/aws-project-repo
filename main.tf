@@ -85,7 +85,7 @@ resource "aws_instance" "ec2_2" {
   ami           = "ami-0b6c6ebed2801a5cb"
   instance_type = "t3.small"
   key_name      = "devops-key"
-  private_ip    = "172.31.10.20"
+  private_ip    = "172.31.80.20"
 
   subnet_id = data.aws_subnet.subnet_b.id
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
@@ -98,7 +98,7 @@ resource "aws_instance" "ec2_3" {
   ami           = "ami-0b6c6ebed2801a5cb"
   instance_type = "t3.small"
   key_name      = "devops-key"
-  private_ip    = "172.31.10.30"
+  private_ip    = "172.31.16.30"
 
   subnet_id = data.aws_subnet.subnet_c.id
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
