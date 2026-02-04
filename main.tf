@@ -69,9 +69,10 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 resource "aws_instance" "ec2_1" {
-  ami           = "ami-0c02fb55956c7d316"
+  ami           = "ami-0b6c6ebed2801a5cb"
   instance_type = "t3.small"
   key_name      = "devops-key"
+  private ip    = "172.31.10.10"
 
   subnet_id = data.aws_subnet.subnet_a.id
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
@@ -81,9 +82,10 @@ resource "aws_instance" "ec2_1" {
   }
 }
 resource "aws_instance" "ec2_2" {
-  ami           = "ami-0c02fb55956c7d316"
+  ami           = "ami-0b6c6ebed2801a5cb"
   instance_type = "t3.small"
   key_name      = "devops-key"
+  private ip    = "172.31.10.20"
 
   subnet_id = data.aws_subnet.subnet_b.id
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
@@ -93,9 +95,10 @@ resource "aws_instance" "ec2_2" {
   }
 }
 resource "aws_instance" "ec2_3" {
-  ami           = "ami-0c02fb55956c7d316"
+  ami           = "ami-0b6c6ebed2801a5cb"
   instance_type = "t3.small"
   key_name      = "devops-key"
+  private ip    = "172.31.10.30"
 
   subnet_id = data.aws_subnet.subnet_c.id
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
@@ -105,3 +108,22 @@ resource "aws_instance" "ec2_3" {
   }
 }
 
+output "jenkins_public_ip" {
+  value = aws_instance.ec2_1.public_ip
+}
+output "jenkins_private_ip" {
+  value = aws_instance.ec2_1.private_ip
+}
+output "k8s_master_public_ip" {
+  value = aws_instance.ec2_2.public_ip
+}
+output "k8s_worker_public_ip" {
+  value = aws_instance.ec2_3.public_ip
+}
+output "k8s_master_private_ip" {
+  value = aws_instance.ec2_3.private_ip
+}
+
+output "k8s_worker_private_ip" {
+  value = aws_instance.ec2_3.private_ip
+}
