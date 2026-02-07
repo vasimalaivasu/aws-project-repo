@@ -84,87 +84,142 @@
         append: yes
 
 # =====================================================
-# KUBERNETES MASTER + PROMETHEUS + GRAFANA
+# EC2 - KUBERNETES MASTER (Docker + K8s + Prometheus + Grafana)
 # =====================================================
-- name: Setup Kubernetes Master
+- name: Setup EC2 K8s Master
   hosts: k8s_master
   become: yes
+
   tasks:
+    # -----------------------------
+    # BASIC SYSTEM REQUIREMENTS
+    # -----------------------------
+    - name: Disable swap (required for Kubernetes)
+      command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+
+    - name: Remove swap from fstab
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*swap.*)$'
+        replace: '# \1'
+
+    - name: Load br_netfilter module
+      modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: Set Kubernetes sysctl parameters
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop:
+        - { name: net.bridge.bridge-nf-call-iptables, value: 1 }
+        - { name: net.ipv4.ip_forward, value: 1 }
+
+    # -----------------------------
+    # DOCKER INSTALLATION
+    # -----------------------------
+    - name: Install Docker prerequisites
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: yes
 
     - name: Add Docker GPG key
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
 
-    - name: Add Docker repo
+    - name: Add Docker repository
       apt_repository:
         repo: deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
         state: present
 
-    - name: Add Kubernetes GPG key
-      apt_key:
-        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
-        state: present
-
-    - name: Add Kubernetes repo
-      apt_repository:
-        repo: deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
-        state: present
-
-    # Prometheus Repo
-    - name: Add Prometheus repo
-      apt_repository:
-        repo: ppa:prometheus-community/prometheus
-        state: present
-
-    # Grafana Repo
-    - name: Add Grafana GPG key
-      apt_key:
-        url: https://packages.grafana.com/gpg.key
-        state: present
-
-    - name: Add Grafana repo
-      apt_repository:
-        repo: deb https://packages.grafana.com/oss/deb stable main
-        state: present
-
-    - name: Update apt
-      apt:
-        update_cache: yes
-
-    - name: Install Kubernetes + Monitoring
+    - name: Install Docker
       apt:
         name:
           - docker-ce
           - docker-ce-cli
           - containerd.io
-          - kubeadm
-          - kubelet
-          - kubectl
-          - prometheus
-          - grafana
         state: present
+        update_cache: yes
 
-    - name: Start Docker
+    - name: Enable and start Docker
       systemd:
         name: docker
         enabled: yes
         state: started
 
-    - name: Start Prometheus
+    # -----------------------------
+    # KUBERNETES INSTALLATION
+    # -----------------------------
+    - name: Add Kubernetes GPG key
+      apt_key:
+        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+        state: present
+
+    - name: Add Kubernetes repository
+      apt_repository:
+        repo: deb https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+        state: present
+
+    - name: Install Kubernetes components
+      apt:
+        name:
+          - kubeadm
+          - kubelet
+          - kubectl
+        state: present
+        update_cache: yes
+
+    - name: Hold Kubernetes packages
+      command: apt-mark hold kubeadm kubelet kubectl
+
+    # -----------------------------
+    # PROMETHEUS INSTALLATION (APT)
+    # -----------------------------
+    - name: Install Prometheus
+      apt:
+        name: prometheus
+        state: present
+
+    - name: Enable and start Prometheus
       systemd:
         name: prometheus
         enabled: yes
         state: started
 
-    - name: Start Grafana
+    # -----------------------------
+    # GRAFANA INSTALLATION (OFFICIAL REPO)
+    # -----------------------------
+    - name: Add Grafana GPG key
+      apt_key:
+        url: https://packages.grafana.com/gpg.key
+        state: present
+
+    - name: Add Grafana repository
+      apt_repository:
+        repo: deb https://packages.grafana.com/oss/deb stable main
+        state: present
+
+    - name: Install Grafana
+      apt:
+        name: grafana
+        state: present
+        update_cache: yes
+
+    - name: Enable and start Grafana
       systemd:
         name: grafana-server
         enabled: yes
         state: started
 
-    - name: Hold Kubernetes packages
-      command: apt-mark hold kubeadm kubelet kubectl
 
 # =====================================================
 # KUBERNETES WORKER
