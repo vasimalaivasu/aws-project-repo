@@ -127,3 +127,5 @@ output "k8s_master_private_ip" {
 output "k8s_worker_private_ip" {
   value = aws_instance.ec2_3.private_ip
 }
+
+output "k8s_woker_private_ip"
