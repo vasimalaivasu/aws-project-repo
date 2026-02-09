@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "<dockerhub-username>/java-demo-app"
+        DOCKER_IMAGE = "vasimalai/java-demo-app"
         DOCKER_TAG   = "latest"
     }
 
