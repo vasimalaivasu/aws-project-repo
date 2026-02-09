@@ -8,12 +8,6 @@ pipeline {
 
     stages {
 
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main', url: '<YOUR-GITHUB-REPO-URL>'
-            }
-        }
-
         stage('Build with Maven') {
             steps {
                 dir('java-app') {
