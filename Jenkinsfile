@@ -42,6 +42,9 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
+                    ssh -i /var/snap/jenkins/common/.ssh/devops-key.pem \
+                    -o StrictHostKeyChecking=no \
+                    ubuntu@172.31.80.20 \
                     kubectl apply -f k8s/deployment.yaml
                     kubectl apply -f k8s/service.yaml
                 """
